@@ -3,10 +3,14 @@
 #include <time.h>
 #include "barve.h"
 
-char polja[12][12];
-char zasedenost[12][12];
+char* polja;
+char* zasedenost;
+int size;
+int s2;
 int stanje;
 int igralec;
+int poljPrvega;
+int poljDrugega;
 int barva1;
 int barva2;
 
@@ -39,16 +43,14 @@ void nastaviBarvo (char barva) {
 
 void generirajPolja() {
 	
-	for (int i = 0; i < 12; i++) {
-		for (int j = 0; j < 12; j++) {
-			
-			polja[i][j] = random() % 6 + 1;
-			zasedenost[i][j] = 0;
-		}
+	for (int i = 0; i < s2; i++) {
+		
+		polja[i] = random() % 6 + 1;
+		zasedenost[i] = 0;
 	}
 	
-	zasedenost[0][0] = 1;
-	zasedenost[11][11] = 1;
+	zasedenost[0] = 1;
+	zasedenost[s2 - 1] = 1;
 }
 
 char varenVnos() {
@@ -74,8 +76,8 @@ void zamenjajIgralca() {
 
 int preveriKoncnost() {
 
-	for (int i = 0; i < 144; i++) {
-		if (zasedenost[i/12][i%12] == 0) {
+	for (int i = 0; i < s2; i++) {
+		if (zasedenost[i] == 0) {
 			
 			return 1;
 		}
@@ -128,7 +130,7 @@ void igralniZaslon() {
 	
 	printf(CLEAR);
 	
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 12 - size / 2; i++) {
 		putchar('\n');
 	}
 	
@@ -138,12 +140,12 @@ void igralniZaslon() {
 	
 	printf("Player %d\n\n", igralec);
 	
-	for (int vrstica = 0; vrstica < 12; vrstica++) {
-		for (int i = 0; i < 28; i++) {
+	for (int vrstica = 0; vrstica < size; vrstica++) {
+		for (int i = 0; i < 40 - size; i++) {
 			putchar(' ');
 		}
-		for (int stolpec = 0; stolpec < 12; stolpec++) {
-			nastaviBarvo(polja[vrstica][stolpec]);
+		for (int stolpec = 0; stolpec < size; stolpec++) {
+			nastaviBarvo(polja[vrstica * size + stolpec]);
 			printf(KVAD);
 		}
 		printf("\n");
@@ -151,7 +153,7 @@ void igralniZaslon() {
 	
 	printf(BREZ);
 	
-	for (int i = 0; i < 7; i++) {
+	for (int i = 0; i < 13 - (size + 1) / 2; i++) {
 		putchar('\n');
 	}
 	
@@ -168,33 +170,22 @@ void koncniZaslon() {
 	
 	printf(CLEAR);
 	
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 12 - size / 2; i++) {
 		putchar('\n');
 	}
 	
-	if (igralec == 0) {
-		
-		for (int i = 0; i < 34; i++) {
-			putchar(' ');
-		}
-		
-		printf("It's a draw!\n\n");
-	}
-	else {
-		
-		for (int i = 0; i < 33; i++) {
-			putchar(' ');
-		}
-		
-		printf("Player %d wins!\n\n", igralec);
+	for (int i = 0; i < 36; i++) {
+		putchar(' ');
 	}
 	
-	for (int vrstica = 0; vrstica < 12; vrstica++) {
-		for (int i = 0; i < 28; i++) {
+	printf("Player %d\n\n", igralec);
+	
+	for (int vrstica = 0; vrstica < size; vrstica++) {
+		for (int i = 0; i < 40 - size; i++) {
 			putchar(' ');
 		}
-		for (int stolpec = 0; stolpec < 12; stolpec++) {
-			nastaviBarvo(polja[vrstica][stolpec]);
+		for (int stolpec = 0; stolpec < size; stolpec++) {
+			nastaviBarvo(polja[vrstica * size + stolpec]);
 			printf(KVAD);
 		}
 		printf("\n");
@@ -202,7 +193,7 @@ void koncniZaslon() {
 	
 	printf(BREZ);
 	
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 14 - (size + 1) / 2; i++) {
 		putchar('\n');
 	}
 }
@@ -253,17 +244,19 @@ int preveriVeljavnost (char vnos) {
 
 void floodFill (int x, int y, char target, char replace) {
 	
-	if (x > 11 || y > 11 || x < 0 || y < 0 || polja[y][x] != target) {
+	int idx = y * size + x;
+	
+	if (x > size - 1 || y > size - 1 || x < 0 || y < 0 || polja[idx] != target) {
 		return;
 	}
 	
-	if (polja[y][x] == replace) {
-		zasedenost[y][x] = 1;
+	if (polja[idx] == replace) {
+		zasedenost[idx] = 1;
 		return;
 	}
 	
-	polja[y][x] = replace;
-	zasedenost[y][x] = 1;
+	polja[idx] = replace;
+	zasedenost[idx] = 1;
 	
 	floodFill(x-1, y, target, replace);
 	floodFill(x, y-1, target, replace);
@@ -278,30 +271,30 @@ void zamenjajBarvo (char vnos) {
 		barva1 = vnos;
 	}
 	else {
-		floodFill(11, 11, barva2, vnos);
+		floodFill(size - 1, size - 1, barva2, vnos);
 		barva2 = vnos;
 	}
 }
 
 void dobiZmagovalca() {
 	
-	int prvega = 0;
-	int drugega = 0;
+	poljPrvega = 0;
+	poljDrugega = 0;
 	
-	for (int i = 0; i < 144; i++) {
-		if (polja[i/12][i%12] == barva1) {
+	for (int i = 0; i < s2; i++) {
+		if (polja[i] == barva1) {
 			
-			prvega++;
+			poljPrvega++;
 		}
 		else {
-			drugega++;
+			poljDrugega++;
 		}
 	}
 	
-	if (prvega < drugega) {
+	if (poljPrvega < poljDrugega) {
 		igralec = 2;
 	}
-	else if (prvega > drugega) {
+	else if (poljPrvega > poljDrugega) {
 		igralec = 1;
 	}
 	else {
@@ -323,10 +316,27 @@ int main() {
 		
 		if (stanje == 0 && vnos == '1') {
 			
+			naNovo();
+			
+			printf("Input number of fields in each dimension (2 - 24):\n");
+			scanf("%d", &size);
+			
+			while (size < 2 || size > 24) {
+				
+				naNovo();
+				printf("Invalid size! Input number of fields in each dimension (2 - 24):\n");
+				scanf("%d", &size);
+			}
+			
+			s2 = size * size;
+			
+			polja = malloc(s2 * sizeof(char));
+			zasedenost = malloc(s2 * sizeof(char));
+			
 			generirajPolja();
 			
-			barva1 = polja[0][0];
-			barva2 = polja[11][11];
+			barva1 = polja[0];
+			barva2 = polja[s2 - 1];
 			
 			igralec = 1;
 			stanje = 1;
