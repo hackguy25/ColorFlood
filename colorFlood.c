@@ -4,7 +4,6 @@
 #include "barve.h"
 
 char* polja;
-char* zasedenost;
 int size;
 int s2;
 int stanje;
@@ -46,11 +45,10 @@ void generirajPolja() {
 	for (int i = 0; i < s2; i++) {
 		
 		polja[i] = random() % 6 + 1;
-		zasedenost[i] = 0;
 	}
 	
-	zasedenost[0] = 1;
-	zasedenost[s2 - 1] = 1;
+	poljPrvega = 1;
+	poljDrugega = 1;
 }
 
 char varenVnos() {
@@ -65,6 +63,7 @@ char varenVnos() {
 }
 
 void zamenjajIgralca() {
+	
 	if (igralec == 1) {
 		
 		igralec = 2;
@@ -76,11 +75,8 @@ void zamenjajIgralca() {
 
 int preveriKoncnost() {
 
-	for (int i = 0; i < s2; i++) {
-		if (zasedenost[i] == 0) {
-			
-			return 1;
-		}
+	if (poljPrvega + poljDrugega < s2) {
+		return 1;
 	}
 	
 	return 2;
@@ -174,11 +170,22 @@ void koncniZaslon() {
 		putchar('\n');
 	}
 	
-	for (int i = 0; i < 36; i++) {
-		putchar(' ');
+	if (igralec == 0) {
+		
+		for (int i = 0; i < 34; i++) {
+			putchar(' ');
+		}
+		
+		printf("It's a draw!\n\n");
 	}
-	
-	printf("Player %d\n\n", igralec);
+	else {
+		
+		for (int i = 0; i < 33; i++) {
+			putchar(' ');
+		}
+		
+		printf("Player %d wins!\n\n", igralec);
+	}
 	
 	for (int vrstica = 0; vrstica < size; vrstica++) {
 		for (int i = 0; i < 40 - size; i++) {
@@ -193,9 +200,11 @@ void koncniZaslon() {
 	
 	printf(BREZ);
 	
-	for (int i = 0; i < 14 - (size + 1) / 2; i++) {
+	for (int i = 0; i < 13 - (size + 1) / 2; i++) {
 		putchar('\n');
 	}
+	
+	printf("Input x to quit.\n");
 }
 
 void naNovo () {
@@ -242,54 +251,44 @@ int preveriVeljavnost (char vnos) {
 	}
 }
 
-void floodFill (int x, int y, char target, char replace) {
+int floodFill (int x, int y, char target, char replace) {
 	
 	int idx = y * size + x;
 	
 	if (x > size - 1 || y > size - 1 || x < 0 || y < 0 || polja[idx] != target) {
-		return;
+	
+		return 0;
 	}
 	
 	if (polja[idx] == replace) {
-		zasedenost[idx] = 1;
-		return;
+		
+		return 1;
 	}
 	
 	polja[idx] = replace;
-	zasedenost[idx] = 1;
+	int vrni = 1;
 	
-	floodFill(x-1, y, target, replace);
-	floodFill(x, y-1, target, replace);
-	floodFill(x+1, y, target, replace);
-	floodFill(x, y+1, target, replace);
+	vrni += floodFill(x-1, y, target, replace);
+	vrni += floodFill(x, y-1, target, replace);
+	vrni += floodFill(x+1, y, target, replace);
+	vrni += floodFill(x, y+1, target, replace);
+	
+	return vrni;
 }
 
 void zamenjajBarvo (char vnos) {
 	
 	if (igralec == 1) {
-		floodFill(0, 0, barva1, vnos);
+		poljPrvega = floodFill(0, 0, barva1, vnos);
 		barva1 = vnos;
 	}
 	else {
-		floodFill(size - 1, size - 1, barva2, vnos);
+		poljDrugega = floodFill(size - 1, size - 1, barva2, vnos);
 		barva2 = vnos;
 	}
 }
 
 void dobiZmagovalca() {
-	
-	poljPrvega = 0;
-	poljDrugega = 0;
-	
-	for (int i = 0; i < s2; i++) {
-		if (polja[i] == barva1) {
-			
-			poljPrvega++;
-		}
-		else {
-			poljDrugega++;
-		}
-	}
 	
 	if (poljPrvega < poljDrugega) {
 		igralec = 2;
@@ -331,7 +330,6 @@ int main() {
 			s2 = size * size;
 			
 			polja = malloc(s2 * sizeof(char));
-			zasedenost = malloc(s2 * sizeof(char));
 			
 			generirajPolja();
 			
