@@ -3,7 +3,8 @@
 #include <time.h>
 #include "barve.h"
 
-char* polja;
+char *polja;
+int neki;
 int size;
 int s2;
 int stanje;
